@@ -10,16 +10,17 @@ let
       ) { });
   # lc = pkgs.ocamlPackages;
   # oc = buildpkgs.ocamlPackages;
-  oc = buildpkgs.ocaml-ng.ocamlPackages_4_03;
-  nc = pkgs.ocaml-ng.ocamlPackages_4_03;
+  oc = buildpkgs.ocaml-ng.ocamlPackages_4_01_0;
+  nc = pkgs.ocaml-ng.ocamlPackages_4_01_0;
   # ocamlbuild requires a newer ocaml version than the rest (makes more sense as it is a tool)
   # oc_build = pkgs.ocaml-ng.ocamlPackages_4_03;
-  num = if oc ? num then oc.num else nc.num;
-  parmap = if oc ? parmap then oc.parmap else (pkgs.callPackage ./parmap.nix {
-    ocaml = oc.ocaml;
+  num = if oc ? num then nc.num else nc.num;
+  parmap = pkgs.callPackage ./parmap.nix {
+    ocaml = nc.ocaml;
     findlib = nc.findlib;
     ocamlbuild = nc.ocamlbuild;
-  });
+  };
+  batteries = oc.ocaml_batteries;
 in 
   assert oc.ocaml.version == nc.ocaml.version;
   pkgs.callPackage ./package.nix {
@@ -27,13 +28,13 @@ in
     findlib = nc.findlib;
     # ocamlbuild = pkgs.callPackage ./ocamlbuild.nix { ocaml = oc_build.ocaml; };
     ocamlbuild = nc.ocamlbuild;
-    batteries = oc.ocaml_batteries;
+    inherit batteries;
     camlp4 = nc.camlp4;
     ocaml_oasis = nc.ocaml_oasis;
     inherit num;
     inherit parmap;
     deriving = pkgs.callPackage ./deriving.nix { 
-      ocaml = oc.ocaml;
+      ocaml = nc.ocaml;
       findlib = nc.findlib;
       camlp4 = nc.camlp4;
       ocaml_oasis = nc.ocaml_oasis;

@@ -33,7 +33,6 @@ stdenv.mkDerivation rec {
   };
 
   nativeBuildInputs = [
-    ncurses
     findlib
     ocaml_oasis
     ocamlbuild
@@ -53,8 +52,6 @@ stdenv.mkDerivation rec {
     cd src
     ocamlbuild -use-ocamlfind \
       type.native \
-      -ocamlopt "-inline 20" -ocamlopt -nodynlink
-
       parser.native \
       ail_parser.native \
       ail.native \
@@ -73,6 +70,8 @@ stdenv.mkDerivation rec {
       disassemble_process.native \
       analysis_process.native \
       instrumentation_plugin.native \
+      -ocamlopt "-inline 20" \
+      -ocamlopt -nodynlink
   '';
 
   installPhase = ''

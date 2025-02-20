@@ -13,7 +13,16 @@
 }:
 stdenv.mkDerivation rec {
   pname = "deriving";
-  version = "0.8.1";
+  version = "0.7";
+
+  src = fetchFromGitHub {
+    owner = "ocsigen";
+    repo = pname;
+    rev = version;
+    hash = "sha256-fEnxoehQrw/+jlVEZJF5T6s/HnV1dJGEVT4GT58B5hc=";
+  };
+
+  patches = [ ./deriving_lt402.patch ];
 
   buildInputs = [
     ocamlbuild
@@ -41,10 +50,4 @@ stdenv.mkDerivation rec {
   #   mkdir -p "$out/lib/ocaml/${ocaml.version}/site-lib"
   # '';
 
-  src = fetchFromGitHub {
-    owner = "ocsigen";
-    repo = pname;
-    rev = version;
-    sha256 = "sha256-CX5CKZrLb3dU1f5bObsXVt8ZTo71n0TjXc3L25bPfw8=";
-  };
 }

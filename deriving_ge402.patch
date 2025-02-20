@@ -1,0 +1,135 @@
+diff --git a/_oasis b/_oasis
+index ba2d437..3248bcb 100644
+--- a/_oasis
++++ b/_oasis
+@@ -47,14 +47,14 @@ Library "pa_deriving_common"
+   FindlibName   : common
+   Pack          : true
+   Modules       : Id, Utils, Type, Defs, Clusters, Base, Extend
+-  BuildDepends  : camlp4,camlp4.extend,camlp4.quotations.o,optcomp,bytes
++  BuildDepends  : camlp4,camlp4.extend,camlp4.quotations.o,bytes
+ 
+ Library "pa_deriving_std"
+   Path          : syntax/std
+   FindlibParent : pa_deriving_classes
+   FindlibName   : std
+   Modules       : Pa_deriving_std
+-  BuildDepends  : deriving.syntax.common,optcomp,camlp4.quotations.o
++  BuildDepends  : deriving.syntax.common,camlp4.quotations.o
+ 
+ Library "pa_deriving_tc"
+   Path          : syntax/tc
+@@ -82,7 +82,7 @@ Executable test
+   Path           : tests/std
+   CompiledObject : best
+   MainIs         : notc.ml
+-  BuildDepends   : deriving,optcomp
++  BuildDepends   : deriving
+   Install        : false
+   Build$: flag(tests)
+ 
+diff --git a/opam b/opam
+index bf200f3..871dca5 100644
+--- a/opam
++++ b/opam
+@@ -14,7 +14,6 @@ remove: [ "ocamlfind" "remove" "deriving" ]
+ depends: [
+   "ocamlfind"
+   "camlp4"
+-  "optcomp"
+   ## OASIS is not required in released version
+   "oasis" {>= "0.4.4"}
+ ]
+diff --git a/syntax/common/base.ml b/syntax/common/base.ml
+index 20572db..21e5213 100644
+--- a/syntax/common/base.ml
++++ b/syntax/common/base.ml
+@@ -508,9 +508,6 @@ module InnerGenerator(Loc: Loc)(Desc : InnerClassDescription) = struct
+       let cluster_argmap = make_argmap cluster.Clusters.params in
+ 
+       let rec wrap_local_types (args : expr list) body =
+-#if ocaml_version < (4, 00)
+-        body
+-#else
+         match args with
+         | [] -> body
+         | `Param (arg, _) :: args
+@@ -526,7 +523,6 @@ module InnerGenerator(Loc: Loc)(Desc : InnerClassDescription) = struct
+               <:expr< (fun (type $lid:id$) -> (function $pat$ -> $body$))
+                      (module $uid:"M_"^arg$) >>
+         | _ -> assert false
+-#endif
+       in
+ 
+       let generate_instance (tname, eparams as inst) =
+diff --git a/syntax/common/type.ml b/syntax/common/type.ml
+index ddfed8d..01c6810 100644
+--- a/syntax/common/type.ml
++++ b/syntax/common/type.ml
+@@ -251,11 +251,9 @@ struct
+     | Ast.TyQuP (loc, name) -> name, Some `Plus
+     | Ast.TyQuM (loc, name) -> name, Some `Minus
+     | Ast.TyQuo (loc, name)  -> name, None
+-#if ocaml_version >= (4, 00)
+     | Ast.TyAnP _ -> anon_param (), Some `Plus
+     | Ast.TyAnM _ -> anon_param (), Some `Minus
+     | Ast.TyAny _ -> anon_param (), None
+-#endif
+     | _ -> assert false
+ 
+   let params = List.map param
+@@ -564,14 +562,10 @@ struct
+   let param (name, v) =
+     if name.[0] = '_'
+     then
+-#if ocaml_version < (4, 00)
+-      Ast.TyAny _loc
+-#else
+       match v with
+       | None        -> Ast.TyAny _loc
+       | Some `Plus  -> Ast.TyAnP _loc
+       | Some `Minus -> Ast.TyAnM _loc
+-#endif
+     else
+       match v with
+       | None        -> <:ctyp<  '$lid:name$ >>
+diff --git a/syntax/common/utils.ml b/syntax/common/utils.ml
+index 67f88e0..de7133c 100644
+--- a/syntax/common/utils.ml
++++ b/syntax/common/utils.ml
+@@ -141,16 +141,12 @@ struct
+     | TyOfAmp (_, c1, c2) -> "TyOfAmp ("^ ctyp c1 ^ ", " ^ ctyp c2 ^")"
+     | TyPkg (_, mt) -> failwith "first-class modules not supported"
+     | TyAnt (_, s) -> "TyAnt("^s^")"
+-#if ocaml_version >= (4, 00)
+     | TyTypePol (_, c1, c2) -> "TyTypoPol("^ ctyp c1^ ", "^ ctyp c2 ^")"
+     | TyAnP _ -> "TyAnP"
+     | TyAnM _ -> "TyAnM"
+-#endif
+-#if ocaml_version >= (4, 02)
+     | TyAtt (_,name,_,c) -> "TyAtt("^ name ^", "^ ctyp c ^")"
+     | TyExt (_,name,args,c) -> "TyExt("^ ident name ^", ["^ (String.concat ", " (List.map ctyp args)) ^ "], " ^ ctyp c ^")"
+     | TyOpn _ -> "TyOpn"
+-#endif
+ end
+ 
+ module Map = struct
+diff --git a/tests/std/tests_defs.ml b/tests/std/tests_defs.ml
+index 46049f0..852282e 100644
+--- a/tests/std/tests_defs.ml
++++ b/tests/std/tests_defs.ml
+@@ -175,8 +175,6 @@ type ii' = {
+     int64': Int64.t;
+   } deriving (Eq, Dump, Typeable, Pickle, Show)
+ 
+-#if ocaml_version >= (4, 00)
+-
+ (* GADTs *)
+ 
+ type _ g1 =
+@@ -200,5 +198,3 @@ and _ g4 =
+   | C : 'a g3 * 'a -> 'a g4
+   | D : float g4
+       deriving (Show)
+-
+-#endif
