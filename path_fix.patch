@@ -1,0 +1,481 @@
+diff --git a/src/ail.ml b/src/ail.ml
+index b25022e..2cf91f9 100644
+--- a/src/ail.ml
++++ b/src/ail.ml
+@@ -114,8 +114,8 @@ object (self)
+     Sys.command("cat gcc_exception_table.data >> final.s")
+ 
+   method post_process =
+-    Sys.command("python post_process.py");
+-    Sys.command("python post_process_lib.py");
++    Sys.command("post_process.py");
++    Sys.command("post_process_lib.py");
+     ()
+   (*
+           self#ehframe_dump;
+@@ -123,7 +123,7 @@ object (self)
+    *)
+ 
+   method pre_process =
+-    let  _ = Sys.command("python pre_process.py") in
++    let  _ = Sys.command("pre_process.py") in
+     ()
+ 
+ 
+@@ -150,4 +150,4 @@ object (self)
+     self#post_process
+ 
+ 
+-end
+\ No newline at end of file
++end
+diff --git a/src/ail_utils.ml b/src/ail_utils.ml
+index bef7476..2dc2a65 100644
+--- a/src/ail_utils.ml
++++ b/src/ail_utils.ml
+@@ -1220,7 +1220,7 @@ module Dataset_utils = struct
+ 
+     let insert_data label value size first_time label_pos =
+       let first_time = if first_time then "1" else "0" in
+-      Sys.command("python data_instrumentation.py " ^ label ^ " " ^ value ^ " " ^ size ^ " " ^ first_time ^ " " ^ label_pos)
++      Sys.command("data_instrumentation.py " ^ label ^ " " ^ value ^ " " ^ size ^ " " ^ first_time ^ " " ^ label_pos)
+ 
+ end
+ 
+diff --git a/src/attach.py b/src/attach.py
+index 9330fa0..0c41619 100644
+--- a/src/attach.py
++++ b/src/attach.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ lines = []
+ 
+ with open('temp') as f:
+diff --git a/src/bss_creator.py b/src/bss_creator.py
+index 13de7f3..cec5b95 100644
+--- a/src/bss_creator.py
++++ b/src/bss_creator.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ lines = []
+ 
+ with open("sections.info") as f:
+diff --git a/src/compile_process.py b/src/compile_process.py
+index dce0b0c..fabdeed 100644
+--- a/src/compile_process.py
++++ b/src/compile_process.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ import os
+ import subprocess
+ 
+diff --git a/src/data_instrumentation.py b/src/data_instrumentation.py
+index 7668a60..372037c 100644
+--- a/src/data_instrumentation.py
++++ b/src/data_instrumentation.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ import sys
+ 
+ lines = []
+@@ -18,4 +20,4 @@ for k in range(size):
+ if label_pos == 'after' : lines.append(label + " : \n")
+ 
+ with open('final_data.s', 'w') as f:
+-    f.writelines(lines)
+\ No newline at end of file
++    f.writelines(lines)
+diff --git a/src/disassemble_process.ml b/src/disassemble_process.ml
+index e3aed8e..61fbb27 100644
+--- a/src/disassemble_process.ml
++++ b/src/disassemble_process.ml
+@@ -17,10 +17,10 @@ module Disam = struct
+     let ea = string_of_int ea in
+ 
+     Sys.command("objdump -Dr -j .text "^f^" --start-address="^ba^" --stop-address="^ea^" > "^f^".temp");
+-    Sys.command("python useless_func_del.py "^f);
++    Sys.command("useless_func_del.py "^f);
+     Sys.command("cat "^f^".disassemble | grep \"^ \" | cut -f1,3 > instrs.info");
+ 
+-    Sys.command("python filter_nop.py");
++    Sys.command("filter_nop.py");
+ 
+ 	Sys.command("cut -f 1 instrs.info > text_mem.info");
+     ()
+diff --git a/src/exception_process.py b/src/exception_process.py
+index 4dda4f0..f795af3 100644
+--- a/src/exception_process.py
++++ b/src/exception_process.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ import re, sys
+ 
+ lines = []
+diff --git a/src/export_data.py b/src/export_data.py
+index df58a9d..3a091a8 100644
+--- a/src/export_data.py
++++ b/src/export_data.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ # this function select export data from eport table and dump their memory
+ # addresses
+ 
+diff --git a/src/extern_symbol_process64.py b/src/extern_symbol_process64.py
+index 4d1ebd5..32f4e87 100644
+--- a/src/extern_symbol_process64.py
++++ b/src/extern_symbol_process64.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ # this code aims at solving glibc global variables issue
+ #
+ # some of the code contains comments like this:
+diff --git a/src/filter_nop.py b/src/filter_nop.py
+index 79052bb..185f4d9 100644
+--- a/src/filter_nop.py
++++ b/src/filter_nop.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ import sys
+ 
+ def check_32():
+diff --git a/src/func_discover/func_addr.py b/src/func_addr.py
+similarity index 92%
+rename from src/func_discover/func_addr.py
+rename to src/func_addr.py
+index 2aba4f1..d05e6ca 100644
+--- a/src/func_discover/func_addr.py
++++ b/src/func_addr.py
+@@ -1,3 +1,4 @@
++#!/usr/bin/env python3
+ import os, sys, re, os.path
+ 
+ 
+@@ -49,9 +50,9 @@ for fn in fnl:
+                 d = m.groups()[0]
+                 if not d in blacklist:
+                     addr = fn.split('<')[0].strip()
+-            	    addrs.append("0x" + addr + '\n')
+-            	    addrs_2.append(fn)
+-	else:
++                    addrs.append("0x" + addr + '\n')
++                    addrs_2.append(fn)
++        else:
+             addr = fn.split('<')[0].strip()
+             addrs.append("0x" + addr + '\n')
+             addrs_2.append(fn)
+diff --git a/src/func_slicer.ml b/src/func_slicer.ml
+index 5f9495f..9730dfd 100644
+--- a/src/func_slicer.ml
++++ b/src/func_slicer.ml
+@@ -58,7 +58,7 @@ class func_slicer instrs funcs =
+     (* end *)
+ 
+     method filter_addr_by_secs (bl : int list) : int list =
+-      Sys.command("python init_sec_adjust.py");
++      Sys.command("init_sec_adjust.py");
+ 	  let il = read_file "init_sec.info" in
+ 	  let l = List.nth il 0 in
+       let items = Str.split (Str.regexp " +") l in
+diff --git a/src/gobmk_sub.py b/src/gobmk_sub.py
+index 1c5aa92..e6bc1e8 100644
+--- a/src/gobmk_sub.py
++++ b/src/gobmk_sub.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ import sys, os
+ 
+ # subsititution for binary gobmk
+diff --git a/src/init.ml b/src/init.ml
+index c07b28a..3e39829 100644
+--- a/src/init.ml
++++ b/src/init.ml
+@@ -25,9 +25,9 @@ object (self)
+     ret := Sys.command("objdump -Dr -j .text "^f^" > "^f^".temp");
+     self#checkret ret (f^".temp");
+ 
+-    Sys.command("python pic_process.py "^f^" "^(string_of_bool !is_32));
+-    Sys.command("python extern_symbol_process64.py "^f);
+-    Sys.command("python pic_process64.py "^f^" "^(string_of_bool !is_32));
++    Sys.command("pic_process.py "^f^" "^(string_of_bool !is_32));
++    Sys.command("extern_symbol_process64.py "^f);
++    Sys.command("pic_process64.py "^f^" "^(string_of_bool !is_32));
+ 
+     ret := Sys.command("objdump -s -j \
+                         .rodata "^f^" | grep \"^ \" | cut -d \" \" -f3,4,5,6 > rodata.info");
+@@ -60,7 +60,7 @@ object (self)
+     self#userFuncProcess(f)
+ 
+   method bssHandler (f : string) =
+-    let _ = Sys.command("python bss_creator.py") in
++    let _ = Sys.command("bss_creator.py") in
+ 	(*
+               let _ = Sys.command("readelf -s "^f^" | grep 'GLOBAL\|WEAK' \
+                 | awk \'/OBJECT/ {print $2,$8}\' > globalbss.info") in ()
+@@ -83,10 +83,10 @@ object (self)
+                                    > "^f^".disassemble" in
+             Sys.command(filter_str);
+      *)
+-    Sys.command("python useless_func_del.py "^f);
++    Sys.command("useless_func_del.py "^f);
+     Sys.command("cat "^f^".disassemble | grep \"^ \" | cut -f1,3 > instrs.info");
+ 
+-    Sys.command("python filter_nop.py");
++    Sys.command("filter_nop.py");
+ 
+ 	Sys.command("cut -f 1 instrs.info > text_mem.info")
+ 
+diff --git a/src/init_sec_adjust.py b/src/init_sec_adjust.py
+index 8250dc7..e81a999 100644
+--- a/src/init_sec_adjust.py
++++ b/src/init_sec_adjust.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ import os, sys
+ 
+ def get_binname():
+diff --git a/src/inline_update.py b/src/inline_update.py
+index 0dc85e2..4e3d157 100644
+--- a/src/inline_update.py
++++ b/src/inline_update.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ import sys, os
+ 
+ 
+diff --git a/src/instr_prune.py b/src/instr_prune.py
+index 0040293..40b0975 100644
+--- a/src/instr_prune.py
++++ b/src/instr_prune.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ # this is part of the libc standard functions, usually attached at the beginning of the 
+ # .text sections
+ # functions belong to this set : _start; __do_global_dtors_aux; frame_dummy; 
+diff --git a/src/label_adjust.py b/src/label_adjust.py
+index 1e70f53..515e219 100644
+--- a/src/label_adjust.py
++++ b/src/label_adjust.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ # in the diversifying transformation, BB_XX label is inserted to the beginning
+ # of certain instructions. However, as they are inserted in front of function
+ # label, function label would not be assembled into binary. For example:
+diff --git a/src/main_discover.py b/src/main_discover.py
+index b27507f..ab8a8ad 100644
+--- a/src/main_discover.py
++++ b/src/main_discover.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ import sys
+ import os
+ import subprocess
+diff --git a/src/parse_init_array.py b/src/parse_init_array.py
+index b87b7d3..c0de1b7 100644
+--- a/src/parse_init_array.py
++++ b/src/parse_init_array.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ def check_32():
+     lines = []
+     with open("elf.info") as f:
+diff --git a/src/pic_process.py b/src/pic_process.py
+index b93146d..7b36530 100644
+--- a/src/pic_process.py
++++ b/src/pic_process.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ ## Some of the PIC code/module rely on typical pattern to locate
+ ## such as:
+ 
+diff --git a/src/pic_process64.py b/src/pic_process64.py
+index d5848c6..9e3ee28 100644
+--- a/src/pic_process64.py
++++ b/src/pic_process64.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ # this code aims at solving typical issue in 64 bit code
+ # typical instruction disassembled by objdump like this
+ #     4005c9:    48 8b 05 58 08 20 00     mov    0x200858(%rip),%rax        # 600e28 <__libc_start_main@plt+0x200a28>
+diff --git a/src/post_process.py b/src/post_process.py
+index a4cfc9a..1546f79 100644
+--- a/src/post_process.py
++++ b/src/post_process.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ import os
+ import re
+ 
+@@ -160,4 +162,4 @@ with open("final.s", 'w') as f:
+ 
+ 
+ if os.path.isfile('inline_symbols.txt'):
+-    os.system('python3 inline_update.py')
++    os.system(f'python3 {script_path}/inline_update.py')
+diff --git a/src/post_process_data.py b/src/post_process_data.py
+index a1fd272..fa8a071 100644
+--- a/src/post_process_data.py
++++ b/src/post_process_data.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ import os,sys
+ 
+ def check_32():
+diff --git a/src/post_process_lib.py b/src/post_process_lib.py
+index e8f3a5c..82af745 100644
+--- a/src/post_process_lib.py
++++ b/src/post_process_lib.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ # this is a post modifying script of (shared) library code
+ 
+ # four tasks are handled:
+diff --git a/src/pre_process.py b/src/pre_process.py
+index bba64d7..28e0f8d 100644
+--- a/src/pre_process.py
++++ b/src/pre_process.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ lines = []
+ 
+ with open("instrs.info") as f:
+diff --git a/src/reassemble_symbol_get.ml b/src/reassemble_symbol_get.ml
+index c4851cd..0cd266b 100644
+--- a/src/reassemble_symbol_get.ml
++++ b/src/reassemble_symbol_get.ml
+@@ -781,7 +781,7 @@ end
+ 
+     method data_collect =
+       let module EU = ELF_utils in
+-      Sys.command("python spliter.py");
++      Sys.command("spliter.py");
+       (*print_string "begin collection\n"; *)
+       data <- self#collect "data_split.info";
+       (*print_string "finish data\n"; *)
+@@ -2103,15 +2103,15 @@ class reassemble =
+       help sec addr
+ 
+     method update_deslist_with_initarray =
+-      let _ = Sys.command("python parse_init_array.py") in
++      let _ = Sys.command("parse_init_array.py") in
+       init_array_list <- read_file "init_array_new.info"
+ 
+     method update_deslist_with_ehframe =
+-      let _ = Sys.command("python exception_process.py eh_frame") in
++      let _ = Sys.command("exception_process.py eh_frame") in
+       eh_frame_list <- read_file "eh_frame.info"
+ 
+     method update_deslist_with_excp_tbl =
+-      let _ = Sys.command("python exception_process.py gcc_exception_table") in
++      let _ = Sys.command("exception_process.py gcc_exception_table") in
+       excpt_tbl_list <- read_file "gcc_exception_table.info"
+ 
+ 
+@@ -2259,7 +2259,7 @@ class reassemble =
+ 	  else ()
+ 
+     method export_data_dump =
+-      Sys.command("python export_data.py");
++      Sys.command("export_data.py");
+       let addrs = List.map (String.trim) (read_file "export_datas.info") in
+       let aux l =
+         match (self#check_sec l) with
+diff --git a/src/spliter.py b/src/spliter.py
+index ee9d0df..17cd2b7 100644
+--- a/src/spliter.py
++++ b/src/spliter.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ import os, sys
+ 
+ lines = []
+diff --git a/src/uroboros.py b/src/uroboros.py
+index 3c60910..99fb137 100644
+--- a/src/uroboros.py
++++ b/src/uroboros.py
+@@ -61,23 +61,25 @@ def process(f, i):
+     try:
+         os.system("rm final_*.txt")
+ 
++        os.system("mkdir -p func_discover")
++
+         # suppose we use this method to obtain function information
+         os.system("cp " + f + " func_discover/")
+-        os.system("python3 func_discover/func_addr.py func_discover/"+f + " " + str(i))
++        os.system("func_addr.py func_discover/"+f + " " + str(i))
+         os.system("rm final_data.s")
+         os.system('rm useless_func.info')
+         if i > 0:
+-            os.system("python3 useless_func_discover.py " + f)
++            os.system("useless_func_discover.py " + f)
+ 
+         os.system('echo \"' + str(i) + '\" > count.txt')
+         os.system("strip " + f)
+-        os.system("python3 main_discover.py " + f)
++        os.system("main_discover.py " + f)
+ 
+-        os.system("./init.native " + f)
++        os.system("init.native " + f)
+         if not os.path.isfile("final.s"):
+             return False
+ 
+-        os.system("python3 post_process_data.py")
++        os.system("post_process_data.py")
+ 
+         os.system('echo ".section .eh_frame" >> final_data.s')
+         os.system('cat eh_frame_split.info >> final_data.s')
+@@ -91,10 +93,10 @@ def process(f, i):
+ 
+         if "gobmk" in f:
+             # FIXME!
+-            os.system("python3 gobmk_sub.py")
++            os.system("gobmk_sub.py")
+ 
+-        os.system("python3 compile_process.py")
+-        os.system("python3 label_adjust.py")
++        os.system("compile_process.py")
++        os.system("label_adjust.py")
+ 
+         reassemble()
+ 
+diff --git a/src/useless_func_del.py b/src/useless_func_del.py
+index f9caa52..512b943 100644
+--- a/src/useless_func_del.py
++++ b/src/useless_func_del.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ import os, sys
+ import os.path
+ 
+diff --git a/src/useless_func_discover.py b/src/useless_func_discover.py
+index 119d871..1f1330c 100644
+--- a/src/useless_func_discover.py
++++ b/src/useless_func_discover.py
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ import os, sys
+ 
+ fn = sys.argv[1]

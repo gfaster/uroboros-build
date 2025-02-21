@@ -24,6 +24,8 @@ let
 in 
   assert oc.ocaml.version == nc.ocaml.version;
   pkgs.callPackage ./package.nix {
+    bintools = oldpkgs.binutils;
+
     ocaml = oc.ocaml;
     findlib = nc.findlib;
     # ocamlbuild = pkgs.callPackage ./ocamlbuild.nix { ocaml = oc_build.ocaml; };

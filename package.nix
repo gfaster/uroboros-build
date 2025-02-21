@@ -6,8 +6,14 @@
   pkg-config,
   m4,
   ncurses,
-  callPackage,
-
+  python310,
+  bintools,
+  makeWrapper,
+  coreutils,
+  file,
+  gcc,
+  gawk,
+  gnugrep,
 
   ocaml,
   findlib,
@@ -21,7 +27,7 @@
 }:
 stdenv.mkDerivation rec {
   pname = "uroboros";
-  version = "0.5";
+  version = "0.5.2";
 
   src = fetchFromGitHub {
     owner = "s3team";
@@ -32,10 +38,13 @@ stdenv.mkDerivation rec {
     hash = "sha256-1CoK5XdMKZWlt5q6El418DtZIAAcUNB4vswH7Trtmhw=";
   };
 
+  patches = [ ./path_fix.patch ];
+
   nativeBuildInputs = [
     findlib
     ocaml_oasis
     ocamlbuild
+    makeWrapper
   ];
 
   buildInputs = [
@@ -48,34 +57,41 @@ stdenv.mkDerivation rec {
   skipConfigure = true;
 
   buildPhase = ''
-    ocamlfind list
     cd src
-    ocamlbuild -use-ocamlfind \
-      type.native \
-      parser.native \
-      ail_parser.native \
-      ail.native \
-      visit.native \
-      init.native \
-      pp_print.native \
-      cfg.native \
-      ail_utils.native \
-      cg.native \
-      func_slicer.native \
-      disassemble_validator.native \
-      lex_new.native \
-      reassemble_symbol_get.native \
-      data_process.native \
-      share_lib_helper.native \
-      disassemble_process.native \
-      analysis_process.native \
-      instrumentation_plugin.native \
-      -ocamlopt "-inline 20" \
-      -ocamlopt -nodynlink
+    ./build
   '';
 
   installPhase = ''
-    echo "TODO" && false
+    runHook preInstall
+    mkdir -p $out/bin/uroboros_util
+    chmod +x uroboros.py
+    chmod +x bss_creator.py
+    chmod +x pic_process.py
+    chmod +x pic_process64.py
+    chmod +x extern_symbol_process64.py
+    chmod +x data_instrumentation.py
+    chmod +x useless_func_del.py
+    chmod +x filter_nop.py
+    chmod +x spliter.py
+    chmod +x init_sec_adjust.py
+    chmod +x parse_init_array.py
+    chmod +x exception_process.py
+    chmod +x post_process.py
+    chmod +x post_process_lib.py
+    chmod +x pre_process.py
+    chmod +x export_data.py
+    chmod +x func_addr.py
+    chmod +x compile_process.py
+    chmod +x label_adjust.py
+    chmod +x main_discover.py
+    chmod +x post_process_data.py
+    mv *.py _build/*.native $out/bin/uroboros_util
+
+    makeWrapper "$out/bin/uroboros_util/uroboros.py" "$out/bin/uroboros" \
+      --set PATH "${lib.makeBinPath [ bintools python310 coreutils file gcc gawk gnugrep ]}:$out/bin/uroboros_util" \
+      --set LC_ALL "C" # otherwise we run into https://askubuntu.com/q/1081901
+
+    runHook postInstall
   '';
 
 }
