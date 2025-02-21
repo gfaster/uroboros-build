@@ -293,6 +293,19 @@ index b87b7d3..c0de1b7 100644
  def check_32():
      lines = []
      with open("elf.info") as f:
+diff --git a/src/parser.ml b/src/parser.ml
+index 109e382..fd21d1b 100644
+--- a/src/parser.ml
++++ b/src/parser.ml
+@@ -408,7 +408,7 @@ and remove_bracket s' =
+     | "jge" -> JGE | "jnl" -> JNL | "jle" -> JLE
+     | "jng" -> JNG | "jg" -> JG | "jnle" -> JNLE
+     | "js" -> JS | "jns" -> JNS | "jp" -> JP
+-    | "jnp" -> JNP | "jmpq" -> JMPQ | "jno" -> JNO
++    | "jnp" -> JNP | "jmpq" -> JMPQ | "jno" -> JNO | "jo" -> JO
+     | _ -> raise ParseError
+   and loopop_symb = function
+     | "loop" -> LOOP | "loope" -> LOOPE | "loopne" -> LOOPNE
 diff --git a/src/pic_process.py b/src/pic_process.py
 index b93146d..7b36530 100644
 --- a/src/pic_process.py
@@ -360,7 +373,7 @@ index bba64d7..28e0f8d 100644
  
  with open("instrs.info") as f:
 diff --git a/src/reassemble_symbol_get.ml b/src/reassemble_symbol_get.ml
-index c4851cd..0cd266b 100644
+index c4851cd..9e31f31 100644
 --- a/src/reassemble_symbol_get.ml
 +++ b/src/reassemble_symbol_get.ml
 @@ -781,7 +781,7 @@ end
@@ -372,6 +385,15 @@ index c4851cd..0cd266b 100644
        (*print_string "begin collection\n"; *)
        data <- self#collect "data_split.info";
        (*print_string "finish data\n"; *)
+@@ -2020,7 +2020,7 @@ class reassemble =
+         else
+           List.map (fun l ->
+                     try
+-                      let s' = String.sub l 2 8 in
++                      let s' = String.sub l 2 4 in
+                       int_of_string s'
+                     with
+                     | _ ->
 @@ -2103,15 +2103,15 @@ class reassemble =
        help sec addr
  
@@ -410,6 +432,18 @@ index ee9d0df..17cd2b7 100644
  import os, sys
  
  lines = []
+diff --git a/src/type.ml b/src/type.ml
+index 66c3291..bd83e79 100644
+--- a/src/type.ml
++++ b/src/type.ml
+@@ -170,6 +170,7 @@ and jumpop = JMP | JNE | JE | JB | JNAE | JNP | JNO
+               | JC | JNB | JAE | JNC | JBE | JNA
+               | JA | JNBE | JL | JNGE | JGE | JNL | JLE
+               | JNG | JG | JNLE | JS | JNS | JP | JMPQ
++              | JO
+ and loopop = LOOP | LOOPE |LOOPNE
+ and flagop = CLD | CLTD | CLTQ
+ (* and assistop = SCAS | CMPSB | STOS | MOVSL | MOVSB | CMPSW *)
 diff --git a/src/uroboros.py b/src/uroboros.py
 index 3c60910..99fb137 100644
 --- a/src/uroboros.py
